@@ -19,7 +19,7 @@ function App() {
     render() {
       return S.html`
         <div class="test">
-          ${ Foo() }
+          ${ Foo }
           ${ staticHr }
         </div>
       `;
