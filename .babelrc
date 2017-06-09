@@ -1,0 +1,14 @@
+{
+  "presets": [
+    [
+      "es2015",
+      {
+        "modules": false
+      }
+    ],
+    "babel-preset-stage-0"
+  ],
+  "plugins": [
+    "external-helpers"
+  ]
+}
