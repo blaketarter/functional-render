@@ -28,19 +28,19 @@ function wrapComponentWithId(html, id) {
   `;
 }
 
-function attatchVDomComponent(componentAfterInit, vDomComponent, parentComponent, isNonComponent) {
+function attatchVDomComponent(componentAfterInit, vDomComponent, parentComponent, isNonComponent, childIndex) {
   if (isNonComponent) {
     if (!parentComponent) {
-      vDomComponent[componentAfterInit] = { component: componentAfterInit, children: {}, parent: null, };
+      vDomComponent[componentAfterInit] = { component: componentAfterInit, children: {}, parent: null, childIndex: null };
     } else {
-      vDomComponent.children[componentAfterInit] = { component: componentAfterInit, children: {}, parent: vDomComponent };
+      vDomComponent.children[componentAfterInit] = { component: componentAfterInit, children: {}, parent: vDomComponent, childIndex };
     }
   } else {
     if (!parentComponent) {
-      vDomComponent[componentAfterInit.id] = { id: componentAfterInit.id, component: componentAfterInit, children: {}, parent: null };
+      vDomComponent[componentAfterInit.id] = { id: componentAfterInit.id, component: componentAfterInit, children: {}, parent: null, childIndex: null };
       componentAfterInit.vDomComponent = vDomComponent[componentAfterInit.id];
     } else {
-      vDomComponent.children[componentAfterInit.id] = { id: componentAfterInit.id, component: componentAfterInit, children: {}, parent: vDomComponent };
+      vDomComponent.children[componentAfterInit.id] = { id: componentAfterInit.id, component: componentAfterInit, children: {}, parent: vDomComponent, childIndex };
       componentAfterInit.vDomComponent = vDomComponent.children[componentAfterInit.id];
     }
   }
@@ -62,11 +62,11 @@ function cacheVDomRender(component, vDomComponent, parentComponent, html, isNonC
   }
 }
   
-function renderComponent(component, vDomComponent = {}, parentComponent, isInit) {
+function renderComponent(component, vDomComponent = {}, parentComponent, isInit, childIndex) {
   const componentAfterInit = initComponent(component);
 
   if (isInit) {
-    attatchVDomComponent(componentAfterInit, vDomComponent, parentComponent);
+    attatchVDomComponent(componentAfterInit, vDomComponent, parentComponent, false, childIndex);
   }
 
   if (componentAfterInit.willRender) {
@@ -85,10 +85,11 @@ function renderComponent(component, vDomComponent = {}, parentComponent, isInit)
   return wrapComponentWithId(renderedHtml.join(''), componentAfterInit.id);
 }
 
-function renderNonComponent(nonComponent, vDomComponent, parentComponent, isInit) {
+function renderNonComponent(nonComponent, vDomComponent, parentComponent, isInit, childIndex) {
   if (isInit) {
-    attatchVDomComponent(nonComponent, vDomComponent, parentComponent, true);
+    attatchVDomComponent(nonComponent, vDomComponent, parentComponent, true, childIndex);
   }
+
   cacheVDomRender(nonComponent, vDomComponent, parentComponent, nonComponent, true);
 
   return nonComponent;
@@ -98,11 +99,11 @@ function isComponent(maybeComponent) {
   return (typeof maybeComponent === 'function');
 }
   
-function maybeRenderComponent(maybeComponent, vDomComponent, parentComponent, isInit) {
+function maybeRenderComponent(maybeComponent, vDomComponent, parentComponent, isInit, childIndex) {
   if (isComponent(maybeComponent)) {
-    return renderComponent(maybeComponent, vDomComponent, parentComponent, isInit);
+    return renderComponent(maybeComponent, vDomComponent, parentComponent, isInit, childIndex);
   } else {
-    return renderNonComponent(maybeComponent, vDomComponent, parentComponent, isInit);
+    return renderNonComponent(maybeComponent, vDomComponent, parentComponent, isInit, childIndex);
   }
 }
   
@@ -116,8 +117,12 @@ function toHtml(strings, children, vDomComponent, component, isInit) {
 
   result.push(remainingStrings.shift());
 
+  let childIndex = 1;
+
   while (children.length) {
-    result.push(maybeRenderComponent(children.shift(), vDomComponent, component, isInit));
+    result.push(maybeRenderComponent(children.shift(), vDomComponent, component, isInit, childIndex));
+
+    childIndex += 2;
 
     if (remainingStrings.length > 1) {
       result.push(remainingStrings.shift());
