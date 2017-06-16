@@ -33,15 +33,17 @@ function wrapComponentWithId(html, id) {
 function attatchVDomComponent(componentAfterInit, vDomComponent, parentComponent, isNonComponent) {
   if (isNonComponent) {
     if (!parentComponent) {
-      vDomComponent[componentAfterInit] = { component: componentAfterInit, children: {} };
+      vDomComponent[componentAfterInit] = { component: componentAfterInit, children: {}, parent: null };
     } else {
-      vDomComponent.children[componentAfterInit] = { component: componentAfterInit, children: {} };
+      vDomComponent.children[componentAfterInit] = { component: componentAfterInit, children: {}, parent: vDomComponent };
     }
   } else {
     if (!parentComponent) {
-      vDomComponent[componentAfterInit.id] = { component: componentAfterInit, children: {} };
+      vDomComponent[componentAfterInit.id] = { id: componentAfterInit.id, component: componentAfterInit, children: {}, parent: null };
+      componentAfterInit.vDomComponent = vDomComponent[componentAfterInit.id];
     } else {
-      vDomComponent.children[componentAfterInit.id] = { component: componentAfterInit, children: {} };
+      vDomComponent.children[componentAfterInit.id] = { id: componentAfterInit.id, component: componentAfterInit, children: {}, parent: vDomComponent };
+      componentAfterInit.vDomComponent = vDomComponent.children[componentAfterInit.id];
     }
   }
 }
@@ -86,7 +88,7 @@ function renderComponent(component) {
   cacheVDomRender(componentAfterInit, vDomComponent, parentComponent, renderedHtml);
 
   // return renderedHtml;
-  return wrapComponentWithId(renderedHtml, componentAfterInit.id);
+  return wrapComponentWithId(renderedHtml.join(''), componentAfterInit.id);
 }
 
 function renderNonComponent(nonComponent, vDomComponent, parentComponent, isInit) {
@@ -111,24 +113,24 @@ function maybeRenderComponent(maybeComponent, vDomComponent, parentComponent, is
 }
 
 function toHtml(strings, children, vDomComponent, component, isInit) {
-  var result = '';
+  var result = [];
   var remainingStrings = strings.slice();
 
   if (remainingStrings.length < 2) {
-    return remainingStrings[0];
+    return [remainingStrings[0]];
   }
 
-  result += remainingStrings.shift();
+  result.push(remainingStrings.shift());
 
   while (children.length) {
-    result += maybeRenderComponent(children.shift(), vDomComponent, component, isInit);
+    result.push(maybeRenderComponent(children.shift(), vDomComponent, component, isInit));
 
     if (remainingStrings.length > 1) {
-      result += remainingStrings.shift();
+      result.push(remainingStrings.shift());
     }
   }
 
-  result += remainingStrings.pop();
+  result.push(remainingStrings.pop());
 
   return result;
 }
