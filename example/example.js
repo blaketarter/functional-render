@@ -17,6 +17,7 @@ function Foo() {
 function App() {
   return {
     render() {
+      console.log('render log');
       return S.html`
         <div class="test">
           ${ Foo }
