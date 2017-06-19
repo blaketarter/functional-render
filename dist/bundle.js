@@ -4,14 +4,6 @@
 	(global.S = factory());
 }(this, (function () { 'use strict';
 
-function mount(rootComponent, rootNodeSelector) {
-  var vDom = {};
-  var rootNode = document.querySelector(rootNodeSelector);
-
-  rootNode.innerHTML = renderComponent(rootComponent, vDom, null, true);
-  console.log(vDom);
-}
-
 var uniqueId = 0;
 
 function getId() {
@@ -25,120 +17,117 @@ function initComponent(component) {
   return componentAfterInit;
 }
 
-function wrapComponentWithId(html, id) {
-  // return `<div id="${id}">${html}</div>`;
-  return '\n    <!-- <fr id: ' + id + '> -->\n    ' + html + '\n    <!-- </fr id: ' + id + '> -->\n  ';
-}
-
-function attatchVDomComponent(componentAfterInit, vDomComponent, parentComponent, isNonComponent, childIndex) {
-  if (isNonComponent) {
-    if (!parentComponent) {
-      vDomComponent[componentAfterInit] = { component: componentAfterInit, children: {}, parent: null, childIndex: null };
-    } else {
-      vDomComponent.children[componentAfterInit] = { component: componentAfterInit, children: {}, parent: vDomComponent, childIndex: childIndex };
-    }
-  } else {
-    if (!parentComponent) {
-      vDomComponent[componentAfterInit.id] = { id: componentAfterInit.id, component: componentAfterInit, children: {}, parent: null, childIndex: null };
-      componentAfterInit.vDomComponent = vDomComponent[componentAfterInit.id];
-    } else {
-      vDomComponent.children[componentAfterInit.id] = { id: componentAfterInit.id, component: componentAfterInit, children: {}, parent: vDomComponent, childIndex: childIndex };
-      componentAfterInit.vDomComponent = vDomComponent.children[componentAfterInit.id];
-    }
-  }
-}
-
-function cacheVDomRender(component, vDomComponent, parentComponent, html, isNonComponent) {
-  if (isNonComponent) {
-    if (!parentComponent) {
-      vDomComponent[component].cache = html;
-    } else {
-      vDomComponent.children[component].cache = html;
-    }
-  } else {
-    if (!parentComponent) {
-      vDomComponent[component.id].cache = html;
-    } else {
-      vDomComponent.children[component.id].cache = html;
-    }
-  }
-}
-
-function renderComponent(component) {
-  var vDomComponent = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  var parentComponent = arguments[2];
-  var isInit = arguments[3];
-  var childIndex = arguments[4];
-
-  var componentAfterInit = initComponent(component);
-
-  if (isInit) {
-    attatchVDomComponent(componentAfterInit, vDomComponent, parentComponent, false, childIndex);
+function mountComponent(component) {
+  if (component.willMount) {
+    component.willMount();
   }
 
-  if (componentAfterInit.willRender) {
-    componentAfterInit.willRender();
+  var renderResults = component.render();
+
+  if (component.didMount) {
+    component.didMount();
   }
 
-  var componentRaw = componentAfterInit.render();
-  var renderedHtml = toHtml(componentRaw.strings, componentRaw.children, vDomComponent[componentAfterInit.id], component, isInit);
-
-  if (componentAfterInit.didRender) {
-    componentAfterInit.didRender();
-  }
-  cacheVDomRender(componentAfterInit, vDomComponent, parentComponent, renderedHtml);
-
-  // return renderedHtml;
-  return wrapComponentWithId(renderedHtml.join(''), componentAfterInit.id);
-}
-
-function renderNonComponent(nonComponent, vDomComponent, parentComponent, isInit, childIndex) {
-  if (isInit) {
-    attatchVDomComponent(nonComponent, vDomComponent, parentComponent, true, childIndex);
-  }
-
-  cacheVDomRender(nonComponent, vDomComponent, parentComponent, nonComponent, true);
-
-  return nonComponent;
+  return renderResults;
 }
 
 function isComponent(maybeComponent) {
   return typeof maybeComponent === 'function';
 }
 
-function maybeRenderComponent(maybeComponent, vDomComponent, parentComponent, isInit, childIndex) {
-  if (isComponent(maybeComponent)) {
-    return renderComponent(maybeComponent, vDomComponent, parentComponent, isInit, childIndex);
-  } else {
-    return renderNonComponent(maybeComponent, vDomComponent, parentComponent, isInit, childIndex);
-  }
+function generateVDom(rootComponent) {
+  var vDom = {
+    root: null
+  };
+
+  vDom.root = createVDomNode(rootComponent);
+
+  return vDom;
 }
 
-function toHtml(strings, children, vDomComponent, component, isInit) {
-  var result = [];
-  var remainingStrings = strings.slice();
-
-  if (remainingStrings.length < 2) {
-    return [remainingStrings[0]];
+function createVDomNode(maybeComponent, parentNode) {
+  if (isComponent(maybeComponent)) {
+    return createVDomNodeFromComponent(maybeComponent, parentNode);
   }
 
-  result.push(remainingStrings.shift());
+  return createVDomNodeFromNonComponent(maybeComponent, parentNode);
+}
 
-  var childIndex = 1;
+function createVDomNodeFromComponent(component, parentNode) {
+  var componentAfterInit = initComponent(component);
+  var mountResults = mountComponent(componentAfterInit);
 
-  while (children.length) {
-    result.push(maybeRenderComponent(children.shift(), vDomComponent, component, isInit, childIndex));
+  var node = {
+    id: componentAfterInit.id,
+    component: componentAfterInit,
+    parentNode: parentNode,
+    cache: null,
+    html: mountResults.strings,
+    children: [],
+    isComponent: true
+  };
 
-    childIndex += 2;
+  node.children = mountResults.children.map(function (child) {
+    return createVDomNode(child, node);
+  });
 
-    if (remainingStrings.length > 1) {
-      result.push(remainingStrings.shift());
+  return node;
+}
+
+function createVDomNodeFromNonComponent(nonComponent, parentNode) {
+  var id = getId();
+
+  var node = {
+    id: id,
+    component: nonComponent,
+    parentNode: parentNode,
+    cache: null,
+    html: null,
+    children: null,
+    isComponent: false
+  };
+
+  return node;
+}
+
+function createHtml(vDomNode) {
+  if (vDomNode.isComponent) {
+    return createHtmlFromComponent(vDomNode);
+  }
+
+  return createHtmlFromNonComponent(vDomNode);
+}
+
+function createHtmlFromComponent(vDomNode) {
+  var html = '';
+
+  html += vDomNode.html[0];
+
+  for (var i = 0, ii = vDomNode.children.length; i < ii; i++) {
+    html += createHtml(vDomNode.children[i]);
+
+    if (vDomNode.html.length > i) {
+      html += vDomNode.html[i + 1];
     }
   }
 
-  result.push(remainingStrings.pop());
+  if (vDomNode.html.length > 1) {
+    html += vDomNode.html[vDomNode.html.length - 1];
+  }
 
-  return result;
+  return html;
+}
+
+function createHtmlFromNonComponent(vDomNode) {
+  return vDomNode.component;
+}
+
+function mount(rootComponent, rootNodeSelector) {
+  var rootNode = document.querySelector(rootNodeSelector);
+  var vDom = generateVDom(rootComponent);
+
+  rootNode.innerHTML = createHtml(vDom.root);
+  console.log(vDom);
 }
 
 function html(strings) {

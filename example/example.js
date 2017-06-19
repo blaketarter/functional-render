@@ -2,10 +2,10 @@ const staticHr = '<hr />';
 
 function Foo() {
   return {
-    willRender() {
+    willMount() {
       console.log('will render Foo()');
     },
-    didRender() {
+    didMount() {
       console.log('did render Foo()');
     },
     render() {
