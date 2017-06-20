@@ -1,8 +1,5 @@
-(function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(factory((global.S = global.S || {})));
-}(this, (function (exports) { 'use strict';
+(function () {
+'use strict';
 
 var uniqueId = 0;
 
@@ -14,6 +11,82 @@ var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError("Cannot call a class as a function");
   }
+};
+
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+
+
+
+
+
+
+
+
+var inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
+
+
+
+
+
+
+
+
+
+
+
+var possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+
+
+
+
+
+
+
+
+var taggedTemplateLiteral = function (strings, raw) {
+  return Object.freeze(Object.defineProperties(strings, {
+    raw: {
+      value: Object.freeze(raw)
+    }
+  }));
 };
 
 function initComponent(component) {
@@ -154,10 +227,60 @@ function html(strings) {
   return { strings: strings, children: children };
 }
 
-exports.mount = mount;
-exports.html = html;
-exports.Component = Component;
+var _templateObject = taggedTemplateLiteral(['<p>Foo</p>'], ['<p>Foo</p>']);
+var _templateObject2 = taggedTemplateLiteral(['\n      <h1>Hello World</h1>\n      ', '\n      ', '\n    '], ['\n      <h1>Hello World</h1>\n      ', '\n      ', '\n    ']);
 
-Object.defineProperty(exports, '__esModule', { value: true });
+var staticHr = '<hr />';
 
-})));
+var Foo = function (_Component) {
+  inherits(Foo, _Component);
+
+  function Foo() {
+    classCallCheck(this, Foo);
+    return possibleConstructorReturn(this, (Foo.__proto__ || Object.getPrototypeOf(Foo)).apply(this, arguments));
+  }
+
+  createClass(Foo, [{
+    key: 'render',
+    value: function render() {
+      return html(_templateObject);
+    }
+  }]);
+  return Foo;
+}(Component);
+
+var App = function (_Component2) {
+  inherits(App, _Component2);
+
+  function App() {
+    classCallCheck(this, App);
+
+    var _this2 = possibleConstructorReturn(this, (App.__proto__ || Object.getPrototypeOf(App)).call(this));
+
+    console.log('App constructor');
+    return _this2;
+  }
+
+  createClass(App, [{
+    key: 'willMount',
+    value: function willMount() {
+      console.log('App willMount');
+    }
+  }, {
+    key: 'didMount',
+    value: function didMount() {
+      console.log('App didMount');
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      console.log('App Render');
+      return html(_templateObject2, staticHr, Foo);
+    }
+  }]);
+  return App;
+}(Component);
+
+mount(App, '.app');
+
+}());

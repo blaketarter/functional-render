@@ -6,6 +6,10 @@ import {
   createHtml
 } from './render';
 
+import {
+  Component
+} from './component';
+
 function mount(rootComponent, rootNodeSelector) {
   const rootNode = document.querySelector(rootNodeSelector);
   const vDom = generateVDom(rootComponent);
@@ -18,7 +22,8 @@ function html(strings, ...children) {
   return { strings, children };
 }
 
-export default {
+export {
   mount,
   html,
+  Component,
 };

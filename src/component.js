@@ -1,10 +1,7 @@
 import { getId } from './id';
 
 export function initComponent(component) {
-  const componentAfterInit = component();
-  componentAfterInit.id = getId();
-
-  return componentAfterInit;
+  return new component();
 }
 
 export function mountComponent(component) {
@@ -19,4 +16,10 @@ export function mountComponent(component) {
   }
 
   return renderResults;
+}
+
+export class Component {
+  constructor() {
+    this._id = getId();
+  }
 }

@@ -6,10 +6,22 @@ rollup.rollup({
   plugins: [ babel({
     exclude: 'node_modules/**'
   }) ]
-}).then(function (bundle) {
+}).then(function(bundle) {
   bundle.write({
     dest: 'dist/bundle.js',
     format: 'umd',
     moduleName: 'S',
+  });
+  });
+
+rollup.rollup({
+  entry: 'example/src/main.js',
+  plugins: [ babel({
+    exclude: 'node_modules/**'
+  }) ]
+}).then(function(bundle) {
+  bundle.write({
+    dest: 'example/dist/bundle.js',
+    format: 'iife',
   });
 });

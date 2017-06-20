@@ -34,7 +34,7 @@ function createVDomNodeFromComponent(component, parentNode) {
   const mountResults = mountComponent(componentAfterInit);
 
   const node = {
-    id: componentAfterInit.id,
+    id: componentAfterInit._id,
     component: componentAfterInit,
     parentNode: parentNode,
     cache: [],
