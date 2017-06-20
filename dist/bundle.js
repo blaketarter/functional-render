@@ -61,7 +61,7 @@ function createVDomNodeFromComponent(component, parentNode) {
     id: componentAfterInit.id,
     component: componentAfterInit,
     parentNode: parentNode,
-    cache: null,
+    cache: [],
     html: mountResults.strings,
     children: [],
     isComponent: true
@@ -81,13 +81,17 @@ function createVDomNodeFromNonComponent(nonComponent, parentNode) {
     id: id,
     component: nonComponent,
     parentNode: parentNode,
-    cache: null,
+    cache: [],
     html: null,
     children: null,
     isComponent: false
   };
 
   return node;
+}
+
+function cacheVDomChild(vDomNode, childIndex, html) {
+  vDomNode.cache[childIndex] = html;
 }
 
 function createHtml(vDomNode) {
@@ -104,7 +108,10 @@ function createHtmlFromComponent(vDomNode) {
   html += vDomNode.html[0];
 
   for (var i = 0, ii = vDomNode.children.length; i < ii; i++) {
-    html += createHtml(vDomNode.children[i]);
+    var childHtml = createHtml(vDomNode.children[i]);
+    html += childHtml;
+
+    cacheVDomChild(vDomNode, i, childHtml);
 
     if (vDomNode.html.length > i) {
       html += vDomNode.html[i + 1];

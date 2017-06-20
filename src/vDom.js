@@ -37,7 +37,7 @@ function createVDomNodeFromComponent(component, parentNode) {
     id: componentAfterInit.id,
     component: componentAfterInit,
     parentNode: parentNode,
-    cache: null,
+    cache: [],
     html: mountResults.strings,
     children: [],
     isComponent: true,
@@ -55,11 +55,15 @@ function createVDomNodeFromNonComponent(nonComponent, parentNode) {
     id: id,
     component: nonComponent,
     parentNode: parentNode,
-    cache: null,
+    cache: [],
     html: null,
     children: null,
     isComponent: false,
   };
 
   return node;
+}
+
+export function cacheVDomChild(vDomNode, childIndex, html) {
+  vDomNode.cache[childIndex] = html;
 }
