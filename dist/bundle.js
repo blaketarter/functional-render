@@ -16,91 +16,105 @@ var classCallCheck = function (instance, Constructor) {
   }
 };
 
-function initComponent(component) {
-  return new component();
+var createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
+
+
+
+
+
+
+var _extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+function initComponent(component, vDomNode) {
+  if (component._isInitialized) {
+    return component;
+  }
+
+  var componentAfterInit = new component();
+
+  componentAfterInit._isInitialized = true;
+  componentAfterInit._setVDomNode(vDomNode);
+
+  return componentAfterInit;
 }
 
 function mountComponent(component) {
-  if (component.willMount) {
+  if (!component._isMounted && component.willMount) {
     component.willMount();
   }
 
   var renderResults = component.render();
 
-  if (component.didMount) {
+  if (!component._isMounted && component.didMount) {
     component.didMount();
   }
+
+  component._isMounted = true;
 
   return renderResults;
 }
 
-var Component = function Component() {
-  classCallCheck(this, Component);
+var Component = function () {
+  function Component() {
+    classCallCheck(this, Component);
 
-  this._id = getId();
-};
-
-function isComponent(maybeComponent) {
-  return typeof maybeComponent === 'function';
-}
-
-function generateVDom(rootComponent) {
-  var vDom = {
-    root: null
-  };
-
-  vDom.root = createVDomNode(rootComponent);
-
-  return vDom;
-}
-
-function createVDomNode(maybeComponent, parentNode) {
-  if (isComponent(maybeComponent)) {
-    return createVDomNodeFromComponent(maybeComponent, parentNode);
+    this._id = getId();
+    this._isComponent = true;
+    this._isMounted = false;
+    this._isInitialized = false;
   }
 
-  return createVDomNodeFromNonComponent(maybeComponent, parentNode);
-}
+  createClass(Component, [{
+    key: '_setVDomNode',
+    value: function _setVDomNode(vDomNode) {
+      this._vDomNode = vDomNode;
+    }
+  }, {
+    key: 'setState',
+    value: function setState(newState) {
+      if (typeof this.state === 'Object' && typeof newState === 'Object') {
+        this.state = _extends({}, this.state, newState);
+      } else {
+        this.state = newState;
+      }
 
-function createVDomNodeFromComponent(component, parentNode) {
-  var componentAfterInit = initComponent(component);
-  var mountResults = mountComponent(componentAfterInit);
+      reRenderVDomNode(this._vDomNode);
+    }
+  }]);
+  return Component;
+}();
 
-  var node = {
-    id: componentAfterInit._id,
-    component: componentAfterInit,
-    parentNode: parentNode,
-    cache: [],
-    html: mountResults.strings,
-    children: [],
-    isComponent: true
-  };
-
-  node.children = mountResults.children.map(function (child) {
-    return createVDomNode(child, node);
-  });
-
-  return node;
-}
-
-function createVDomNodeFromNonComponent(nonComponent, parentNode) {
-  var id = getId();
-
-  var node = {
-    id: id,
-    component: nonComponent,
-    parentNode: parentNode,
-    cache: [],
-    html: null,
-    children: null,
-    isComponent: false
-  };
-
-  return node;
-}
-
-function cacheVDomChild(vDomNode, childIndex, html) {
-  vDomNode.cache[childIndex] = html;
+function isComponent(maybeComponent) {
+  return typeof maybeComponent === 'function' || maybeComponent instanceof Component;
 }
 
 function createHtml(vDomNode) {
@@ -138,11 +152,92 @@ function createHtmlFromNonComponent(vDomNode) {
   return vDomNode.component;
 }
 
+function generateVDom(rootComponent, rootDomNode) {
+  var vDom = createVDomNode(rootComponent);
+  vDom.domNode = rootDomNode;
+
+  return vDom;
+}
+
+function createVDomNode(maybeComponent, parentNode) {
+  if (isComponent(maybeComponent)) {
+    return createVDomNodeFromComponent(maybeComponent, parentNode);
+  }
+
+  return createVDomNodeFromNonComponent(maybeComponent, parentNode);
+}
+
+function createVDomNodeFromComponent(component, parentNode) {
+  var node = {
+    id: null,
+    component: null,
+    parentNode: parentNode,
+    cache: [],
+    html: null,
+    children: [],
+    isComponent: true,
+    domNode: null
+  };
+
+  var componentAfterInit = initComponent(component, node);
+  var mountResults = mountComponent(componentAfterInit);
+
+  node.id = componentAfterInit._id;
+  node.component = componentAfterInit;
+  node.html = mountResults.strings;
+
+  node.children = mountResults.children.map(function (child) {
+    return createVDomNode(child, node);
+  });
+
+  return node;
+}
+
+function createVDomNodeFromNonComponent(nonComponent, parentNode) {
+  var id = getId();
+
+  var node = {
+    id: id,
+    component: nonComponent,
+    parentNode: parentNode,
+    cache: [],
+    html: null,
+    children: null,
+    isComponent: false,
+    domNode: null
+  };
+
+  return node;
+}
+
+function cacheVDomChild(vDomNode, childIndex, html) {
+  vDomNode.cache[childIndex] = html;
+}
+
+function reRenderVDomNode(vDomNode) {
+  var currentNode = vDomNode;
+  var domNode = vDomNode.domNode;
+
+  if (currentNode.parentNode) {
+    var currentNodeIndex = currentNode.parentNode.children.indexOf(currentNode);
+    currentNode.parentNode.children[currentNodeIndex] = createVDomNode(currentNode.component, currentNode.parentNode);
+  } else {
+    currentNode = createVDomNode(currentNode.component);
+    currentNode.domNode = domNode;
+  }
+
+  while (currentNode.parentNode) {
+    currentNode = currentNode.parentNode;
+  }
+
+  currentNode.domNode.innerHTML = createHtml(currentNode);
+}
+
 function mount(rootComponent, rootNodeSelector) {
   var rootNode = document.querySelector(rootNodeSelector);
-  var vDom = generateVDom(rootComponent);
+  var vDom = generateVDom(rootComponent, rootNode);
 
-  rootNode.innerHTML = createHtml(vDom.root);
+  rootNode.innerHTML = createHtml(vDom);
   console.log(vDom);
 }
 

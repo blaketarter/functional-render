@@ -12,9 +12,9 @@ import {
 
 function mount(rootComponent, rootNodeSelector) {
   const rootNode = document.querySelector(rootNodeSelector);
-  const vDom = generateVDom(rootComponent);
+  const vDom = generateVDom(rootComponent, rootNode);
 
-  rootNode.innerHTML = createHtml(vDom.root);
+  rootNode.innerHTML = createHtml(vDom);
   console.log(vDom);
 }
 

@@ -11,12 +11,13 @@ import {
   getId,
 } from './id';
 
-export function generateVDom(rootComponent) {
-  const vDom = {
-    root: null,
-  };
+import {
+  createHtml
+} from './render';
 
-  vDom.root = createVDomNode(rootComponent);
+export function generateVDom(rootComponent, rootDomNode) {
+  const vDom = createVDomNode(rootComponent);
+  vDom.domNode = rootDomNode;
 
   return vDom;
 }
@@ -30,18 +31,23 @@ function createVDomNode(maybeComponent, parentNode) {
 }
 
 function createVDomNodeFromComponent(component, parentNode) {
-  const componentAfterInit = initComponent(component);
-  const mountResults = mountComponent(componentAfterInit);
-
   const node = {
-    id: componentAfterInit._id,
-    component: componentAfterInit,
+    id: null,
+    component: null,
     parentNode: parentNode,
     cache: [],
-    html: mountResults.strings,
+    html: null,
     children: [],
     isComponent: true,
+    domNode: null,
   };
+  
+  const componentAfterInit = initComponent(component, node);
+  const mountResults = mountComponent(componentAfterInit);
+
+  node.id = componentAfterInit._id;
+  node.component = componentAfterInit;
+  node.html = mountResults.strings;
 
   node.children = mountResults.children.map(child => createVDomNode(child, node));
 
@@ -59,6 +65,7 @@ function createVDomNodeFromNonComponent(nonComponent, parentNode) {
     html: null,
     children: null,
     isComponent: false,
+    domNode: null,
   };
 
   return node;
@@ -66,4 +73,23 @@ function createVDomNodeFromNonComponent(nonComponent, parentNode) {
 
 export function cacheVDomChild(vDomNode, childIndex, html) {
   vDomNode.cache[childIndex] = html;
+}
+
+export function reRenderVDomNode(vDomNode) {
+  let currentNode = vDomNode;
+  let domNode = vDomNode.domNode;
+
+  if (currentNode.parentNode) {
+    const currentNodeIndex = currentNode.parentNode.children.indexOf(currentNode);
+    currentNode.parentNode.children[currentNodeIndex] = createVDomNode(currentNode.component, currentNode.parentNode);
+  } else {
+    currentNode = createVDomNode(currentNode.component);
+    currentNode.domNode = domNode;
+  }
+
+  while (currentNode.parentNode) {
+    currentNode = currentNode.parentNode;
+  }
+
+  currentNode.domNode.innerHTML = createHtml(currentNode);
 }
