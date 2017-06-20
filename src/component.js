@@ -1,12 +1,23 @@
 import { getId } from './id';
 import { reRenderVDomNode } from './vDom';
+import { isComponentArray } from './utils';
 
 export function initComponent(component, vDomNode) {
-  if (component._isInitialized) {
-    return component;
+  let props = {};
+  let realComponent;
+
+  if (isComponentArray(component)) {
+    realComponent = component[0];
+    props = component[1];
+  } else {
+    realComponent = component;
   }
 
-  const componentAfterInit = new component();
+  if (realComponent._isInitialized) {
+    return realComponent;
+  }
+
+  const componentAfterInit = new realComponent(props);
 
   componentAfterInit._isInitialized = true;
   componentAfterInit._setVDomNode(vDomNode);
@@ -43,6 +54,10 @@ export class Component {
   }
 
   setState(newState) {
+    if (!this._isMounted) {
+      return;
+    }
+    
     if (typeof this.state === 'Object' && typeof newState === 'Object') {
       this.state = { ...this.state, ...newState };
     } else {
@@ -50,5 +65,9 @@ export class Component {
     }
 
     reRenderVDomNode(this._vDomNode);
+  }
+
+  static setProps(newProps) {
+    return [this, newProps];
   }
 }

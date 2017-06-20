@@ -7,8 +7,15 @@ import {
 const staticHr = '<hr />';
 
 class Foo extends Component {
+  constructor(props) {
+    super();
+    this.state = {
+      bar: props.bar,
+    };
+  }
+
   render() {
-    return html`<p>Foo</p>`;
+    return html`<p>Foo ${ this.state.bar }</p>`;
   }
 }
 
@@ -30,11 +37,10 @@ class App extends Component {
   
   render() {
     console.log('App Render');
-    console.log('state: ', this.state);
     return html`
       <h1>Hello World ${ this.state }</h1>
       ${ staticHr }
-      ${ Foo }
+      ${ Foo.setProps({ bar: 'Baz' }) }
     `;
   }
 }

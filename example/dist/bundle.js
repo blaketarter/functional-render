@@ -7,6 +7,14 @@ function getId() {
   return uniqueId++;
 }
 
+function isComponent(maybeComponent) {
+  return typeof maybeComponent === 'function' || maybeComponent instanceof Component || isComponentArray(maybeComponent);
+}
+
+function isComponentArray(maybeComponentArray) {
+  return maybeComponentArray instanceof Array && (typeof maybeComponentArray[0] === 'function' || maybeComponentArray[0] instanceof Component);
+}
+
 var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError("Cannot call a class as a function");
@@ -104,11 +112,21 @@ var taggedTemplateLiteral = function (strings, raw) {
 };
 
 function initComponent(component, vDomNode) {
-  if (component._isInitialized) {
-    return component;
+  var props = {};
+  var realComponent = void 0;
+
+  if (isComponentArray(component)) {
+    realComponent = component[0];
+    props = component[1];
+  } else {
+    realComponent = component;
   }
 
-  var componentAfterInit = new component();
+  if (realComponent._isInitialized) {
+    return realComponent;
+  }
+
+  var componentAfterInit = new realComponent(props);
 
   componentAfterInit._isInitialized = true;
   componentAfterInit._setVDomNode(vDomNode);
@@ -150,6 +168,10 @@ var Component = function () {
   }, {
     key: 'setState',
     value: function setState(newState) {
+      if (!this._isMounted) {
+        return;
+      }
+
       if (typeof this.state === 'Object' && typeof newState === 'Object') {
         this.state = _extends({}, this.state, newState);
       } else {
@@ -158,13 +180,14 @@ var Component = function () {
 
       reRenderVDomNode(this._vDomNode);
     }
+  }], [{
+    key: 'setProps',
+    value: function setProps(newProps) {
+      return [this, newProps];
+    }
   }]);
   return Component;
 }();
-
-function isComponent(maybeComponent) {
-  return typeof maybeComponent === 'function' || maybeComponent instanceof Component;
-}
 
 function createHtml(vDomNode) {
   if (vDomNode.isComponent) {
@@ -298,7 +321,7 @@ function html(strings) {
   return { strings: strings, children: children };
 }
 
-var _templateObject = taggedTemplateLiteral(['<p>Foo</p>'], ['<p>Foo</p>']);
+var _templateObject = taggedTemplateLiteral(['<p>Foo ', '</p>'], ['<p>Foo ', '</p>']);
 var _templateObject2 = taggedTemplateLiteral(['\n      <h1>Hello World ', '</h1>\n      ', '\n      ', '\n    '], ['\n      <h1>Hello World ', '</h1>\n      ', '\n      ', '\n    ']);
 
 var staticHr = '<hr />';
@@ -306,15 +329,21 @@ var staticHr = '<hr />';
 var Foo = function (_Component) {
   inherits(Foo, _Component);
 
-  function Foo() {
+  function Foo(props) {
     classCallCheck(this, Foo);
-    return possibleConstructorReturn(this, (Foo.__proto__ || Object.getPrototypeOf(Foo)).apply(this, arguments));
+
+    var _this = possibleConstructorReturn(this, (Foo.__proto__ || Object.getPrototypeOf(Foo)).call(this));
+
+    _this.state = {
+      bar: props.bar
+    };
+    return _this;
   }
 
   createClass(Foo, [{
     key: 'render',
     value: function render() {
-      return html(_templateObject);
+      return html(_templateObject, this.state.bar);
     }
   }]);
   return Foo;
@@ -352,8 +381,7 @@ var App = function (_Component2) {
     key: 'render',
     value: function render() {
       console.log('App Render');
-      console.log('state: ', this.state);
-      return html(_templateObject2, this.state, staticHr, Foo);
+      return html(_templateObject2, this.state, staticHr, Foo.setProps({ bar: 'Baz' }));
     }
   }]);
   return App;
