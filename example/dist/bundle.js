@@ -211,7 +211,7 @@ function getStyles(component) {
 }
 
 function attatchIdAndStyles(html, tagMatch, vDomNode) {
-  return [html.substring(0, tagMatch[0].length - 1 + tagMatch.index), ' s:id="' + vDomNode.id + '">', getStyles(vDomNode.component), html.substring(tagMatch[0].length + tagMatch.index)].join('');
+  return [html.substring(0, tagMatch[0].length - 1 + tagMatch.index), ' data-s-id="' + vDomNode.id + '">', getStyles(vDomNode.component), html.substring(tagMatch[0].length + tagMatch.index)].join('');
 }
 
 function createHtmlFromComponent(vDomNode) {
@@ -236,13 +236,11 @@ function createHtmlFromComponent(vDomNode) {
     cacheVDomChild(vDomNode, i, childHtml);
 
     if (vDomNode.html.length > i) {
-      console.log(vDomNode.html[i + 1]);
       html += vDomNode.html[i + 1];
     }
   }
 
   // if (!vDomNode.children.length && vDomNode.html.length > 1) {
-  //   console.log(vDomNode.html[vDomNode.html.length - 1]);
   //   html += vDomNode.html[vDomNode.html.length - 1];
   // }
 
@@ -332,6 +330,10 @@ function reRenderVDomNode(vDomNode) {
   }
 
   currentNode.domNode.innerHTML = createHtml(currentNode);
+
+  // console.dir(document.querySelectorAll(`[data-s-id="${currentNode.id}"]`)[0]);
+
+  // document.querySelectorAll(`[data-s-id="${currentNode.id}"]`)[0].outerHTML = createHtml(currentNode);
 }
 
 function mount(rootComponent, rootNodeSelector) {
@@ -351,7 +353,7 @@ function html(strings) {
 }
 
 var _templateObject = taggedTemplateLiteral(['<p>Foo ', '</p>'], ['<p>Foo ', '</p>']);
-var _templateObject2 = taggedTemplateLiteral(['\n      <h1>Hello World ', '</h1>\n      ', '\n      ', '\n    '], ['\n      <h1>Hello World ', '</h1>\n      ', '\n      ', '\n    ']);
+var _templateObject2 = taggedTemplateLiteral(['\n      <h1 onClick="', '">Hello World ', '</h1>\n      ', '\n      ', '\n    '], ['\n      <h1 onClick="', '">Hello World ', '</h1>\n      ', '\n      ', '\n    ']);
 
 var staticHr = '<hr />';
 
@@ -394,8 +396,6 @@ var App = function (_Component2) {
   createClass(App, [{
     key: 'getStyles',
     value: function getStyles() {
-      console.log('getting styles');
-
       return '\n      h1 {\n        color: blue;\n      }\n    ';
     }
   }, {
@@ -414,10 +414,15 @@ var App = function (_Component2) {
       }, 1000);
     }
   }, {
+    key: 'onClick',
+    value: function onClick() {
+      this.setState(this.state++);
+    }
+  }, {
     key: 'render',
     value: function render() {
       console.log('App Render');
-      return html(_templateObject2, this.state, staticHr, Foo.props({ bar: 'Baz' }));
+      return html(_templateObject2, this.onClick.bind(this), this.state, staticHr, Foo.props({ bar: 'Baz' }));
     }
   }]);
   return App;

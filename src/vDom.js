@@ -92,4 +92,8 @@ export function reRenderVDomNode(vDomNode) {
   }
 
   currentNode.domNode.innerHTML = createHtml(currentNode);
+
+  // console.dir(document.querySelectorAll(`[data-s-id="${currentNode.id}"]`)[0]);
+
+  // document.querySelectorAll(`[data-s-id="${currentNode.id}"]`)[0].outerHTML = createHtml(currentNode);
 }

@@ -162,7 +162,7 @@ function getStyles(component) {
 }
 
 function attatchIdAndStyles(html, tagMatch, vDomNode) {
-  return [html.substring(0, tagMatch[0].length - 1 + tagMatch.index), ' s:id="' + vDomNode.id + '">', getStyles(vDomNode.component), html.substring(tagMatch[0].length + tagMatch.index)].join('');
+  return [html.substring(0, tagMatch[0].length - 1 + tagMatch.index), ' data-s-id="' + vDomNode.id + '">', getStyles(vDomNode.component), html.substring(tagMatch[0].length + tagMatch.index)].join('');
 }
 
 function createHtmlFromComponent(vDomNode) {
@@ -187,13 +187,11 @@ function createHtmlFromComponent(vDomNode) {
     cacheVDomChild(vDomNode, i, childHtml);
 
     if (vDomNode.html.length > i) {
-      console.log(vDomNode.html[i + 1]);
       html += vDomNode.html[i + 1];
     }
   }
 
   // if (!vDomNode.children.length && vDomNode.html.length > 1) {
-  //   console.log(vDomNode.html[vDomNode.html.length - 1]);
   //   html += vDomNode.html[vDomNode.html.length - 1];
   // }
 
@@ -283,6 +281,10 @@ function reRenderVDomNode(vDomNode) {
   }
 
   currentNode.domNode.innerHTML = createHtml(currentNode);
+
+  // console.dir(document.querySelectorAll(`[data-s-id="${currentNode.id}"]`)[0]);
+
+  // document.querySelectorAll(`[data-s-id="${currentNode.id}"]`)[0].outerHTML = createHtml(currentNode);
 }
 
 function mount(rootComponent, rootNodeSelector) {

@@ -24,7 +24,7 @@ function getStyles(component) {
 function attatchIdAndStyles(html, tagMatch, vDomNode) {
   return [
     html.substring(0, tagMatch[0].length - 1 + tagMatch.index),
-    ` s:id="${vDomNode.id}">`,
+    ` data-s-id="${vDomNode.id}">`,
     getStyles(vDomNode.component),
     html.substring(tagMatch[0].length + tagMatch.index),
   ].join('');

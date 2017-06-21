@@ -4,6 +4,13 @@ import {
   Component
 } from '../../src/main';
 
+/**
+ * TODO:
+ * - figure out click events
+ * - figure out arrays of components
+ * - figure out how to not re render everything
+ */
+
 const staticHr = '<hr />';
 
 class Foo extends Component {
@@ -27,8 +34,6 @@ class App extends Component {
   }
 
   getStyles() {
-    console.log('getting styles');
-
     return `
       h1 {
         color: blue;
