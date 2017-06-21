@@ -15,6 +15,12 @@ function isComponentArray(maybeComponentArray) {
   return maybeComponentArray instanceof Array && (typeof maybeComponentArray[0] === 'function' || maybeComponentArray[0] instanceof Component);
 }
 
+var htmlRegex = /<[^>]*>/;
+
+function findHtmlTag(string) {
+  return string.match(htmlRegex);
+}
+
 var classCallCheck = function (instance, Constructor) {
   if (!(instance instanceof Constructor)) {
     throw new TypeError("Cannot call a class as a function");
@@ -181,8 +187,8 @@ var Component = function () {
       reRenderVDomNode(this._vDomNode);
     }
   }], [{
-    key: 'setProps',
-    value: function setProps(newProps) {
+    key: 'props',
+    value: function props(newProps) {
       return [this, newProps];
     }
   }]);
@@ -197,25 +203,48 @@ function createHtml(vDomNode) {
   return createHtmlFromNonComponent(vDomNode);
 }
 
+function getStyles(component) {
+  if (!component.getStyles) {
+    return '';
+  }
+  return '<style scoped>' + component.getStyles() + '</style>';
+}
+
+function attatchIdAndStyles(html, tagMatch, vDomNode) {
+  return [html.substring(0, tagMatch[0].length - 1 + tagMatch.index), ' s:id="' + vDomNode.id + '">', getStyles(vDomNode.component), html.substring(tagMatch[0].length + tagMatch.index)].join('');
+}
+
 function createHtmlFromComponent(vDomNode) {
   var html = '';
+  var foundFirstTag = false;
 
   html += vDomNode.html[0];
 
   for (var i = 0, ii = vDomNode.children.length; i < ii; i++) {
+    if (!foundFirstTag) {
+      var tagMatch = findHtmlTag(html);
+
+      if (tagMatch.length) {
+        foundFirstTag = true;
+        html = attatchIdAndStyles(html, tagMatch, vDomNode);
+      }
+    }
+
     var childHtml = createHtml(vDomNode.children[i]);
     html += childHtml;
 
     cacheVDomChild(vDomNode, i, childHtml);
 
     if (vDomNode.html.length > i) {
+      console.log(vDomNode.html[i + 1]);
       html += vDomNode.html[i + 1];
     }
   }
 
-  if (vDomNode.html.length > 1) {
-    html += vDomNode.html[vDomNode.html.length - 1];
-  }
+  // if (!vDomNode.children.length && vDomNode.html.length > 1) {
+  //   console.log(vDomNode.html[vDomNode.html.length - 1]);
+  //   html += vDomNode.html[vDomNode.html.length - 1];
+  // }
 
   return html;
 }
@@ -363,6 +392,13 @@ var App = function (_Component2) {
   }
 
   createClass(App, [{
+    key: 'getStyles',
+    value: function getStyles() {
+      console.log('getting styles');
+
+      return '\n      h1 {\n        color: blue;\n      }\n    ';
+    }
+  }, {
     key: 'willMount',
     value: function willMount() {
       console.log('App willMount');
@@ -381,7 +417,7 @@ var App = function (_Component2) {
     key: 'render',
     value: function render() {
       console.log('App Render');
-      return html(_templateObject2, this.state, staticHr, Foo.setProps({ bar: 'Baz' }));
+      return html(_templateObject2, this.state, staticHr, Foo.props({ bar: 'Baz' }));
     }
   }]);
   return App;

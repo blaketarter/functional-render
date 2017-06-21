@@ -57,7 +57,7 @@ export class Component {
     if (!this._isMounted) {
       return;
     }
-    
+
     if (typeof this.state === 'Object' && typeof newState === 'Object') {
       this.state = { ...this.state, ...newState };
     } else {
@@ -67,7 +67,7 @@ export class Component {
     reRenderVDomNode(this._vDomNode);
   }
 
-  static setProps(newProps) {
+  static props(newProps) {
     return [this, newProps];
   }
 }

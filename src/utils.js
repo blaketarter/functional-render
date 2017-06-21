@@ -9,3 +9,9 @@ export function isComponent(maybeComponent) {
 export function isComponentArray(maybeComponentArray) {
   return maybeComponentArray instanceof Array && (typeof maybeComponentArray[0] === 'function' || maybeComponentArray[0] instanceof Component);
 }
+
+const htmlRegex = /<[^>]*>/;
+
+export function findHtmlTag(string) {
+  return string.match(htmlRegex);
+}

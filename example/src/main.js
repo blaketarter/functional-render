@@ -26,6 +26,16 @@ class App extends Component {
     console.log('App constructor');
   }
 
+  getStyles() {
+    console.log('getting styles');
+
+    return `
+      h1 {
+        color: blue;
+      }
+    `;
+  }
+
   willMount() {
     console.log('App willMount');
   }
@@ -40,7 +50,7 @@ class App extends Component {
     return html`
       <h1>Hello World ${ this.state }</h1>
       ${ staticHr }
-      ${ Foo.setProps({ bar: 'Baz' }) }
+      ${ Foo.props({ bar: 'Baz' }) }
     `;
   }
 }
